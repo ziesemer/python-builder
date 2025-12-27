@@ -1,0 +1,29 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"extensions": {
+		"recommendations": [
+			"davidanson.vscode-markdownlint",
+			"bierner.markdown-preview-github-styles"
+		]
+	},
+	"settings": {
+		"files.trimTrailingWhitespace": true,
+		"files.trimFinalNewlines": true,
+		"files.eol": "\n",
+		"cSpell.customDictionaries": {
+			"custom-dictionary-workspace": {
+				"name": "custom-dictionary-workspace",
+				"path": "./.cspell/custom-dictionary-workspace.txt",
+				"addWords": true,
+				"scope": "workspace"
+			}
+		},
+		"cSpell.ignoreRegExpList": [
+			"lib.*"
+		]
+	}
+}

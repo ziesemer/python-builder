@@ -1,0 +1,106 @@
+#!/usr/bin/make -f
+
+# Mark A. Ziesemer, www.ziesemer.com - 2025-12-25
+
+FAST_BUILD ?= false
+BUILD_NOGIL ?= true
+
+DEBIAN_CODENAME := $(shell . /etc/os-release && echo $$VERSION_CODENAME)
+
+OPTIMIZATION_FLAGS = \
+	--enable-optimizations \
+	--with-lto
+
+# - Need to remove unsupported -frelease option in DFLAGS,
+#   otherwise this will fail with:
+#     /usr/bin/dtrace invalid option -frelease
+#     make[4]: *** [Makefile:2396: Include/pydtrace_probes.h] Error 1
+DTRACE_FLAGS = \
+	--with-dtrace DFLAGS=
+
+ifeq ($(FAST_BUILD),true)
+	OPTIMIZATION_FLAGS = \
+		--disable-test-modules
+endif
+
+# Do not use --with-system-libmpdec=no, as in the default Trixie distribution for Python 3.13.
+# - https://docs.python.org/3/using/configure.html#cmdoption-with-system-libmpdec
+#   Deprecated since version 3.13, will be removed in version 3.16:
+#   A copy of the mpdecimal library sources will no longer be distributed with Python 3.16.
+
+# Consider future support for:
+#   --enable-shared
+
+COMMON_CONFIGURE_FLAGS = \
+	--enable-option-checking=fatal \
+	--enable-loadable-sqlite-extensions \
+	--with-system-expat \
+	$(DTRACE_FLAGS) \
+	$(OPTIMIZATION_FLAGS) \
+	--prefix=$(PYTHON_PREFIX)
+
+NOGIL_CONFIGURE_FLAGS = \
+	--disable-gil \
+	--with-ensurepip=no
+
+%: update-changelog
+	dh $@
+
+update-changelog:
+	if [ ! -f debian/.dch-applied ]; then \
+		dch --local "+$(DEBIAN_CODENAME)" \
+			--distribution $(DEBIAN_CODENAME) \
+			--no-auto-nmu \
+			"Auto rebuild for $(DEBIAN_CODENAME)."; \
+			touch debian/.dch-applied; \
+	fi
+
+override_dh_autoreconf:
+	# - If not overridden to nothing, this tries to re-create the .configure script and fails.
+
+override_dh_auto_configure:
+	mkdir -p build-default
+	cd build-default \
+		&& ../configure $(COMMON_CONFIGURE_FLAGS)
+
+ifeq ($(BUILD_NOGIL),true)
+	mkdir -p build-nogil
+	cd build-nogil \
+		&& ../configure $(COMMON_CONFIGURE_FLAGS) $(NOGIL_CONFIGURE_FLAGS)
+endif
+
+override_dh_auto_build:
+	$(MAKE) -C build-default -j$(nproc)
+ifeq ($(BUILD_NOGIL),true)
+	$(MAKE) -C build-nogil   -j$(nproc)
+endif
+
+override_dh_auto_install:
+	$(MAKE) -C build-default \
+		DESTDIR=$(CURDIR)/debian/python$(PYTHON_VER_MAJ_MIN) \
+		install
+
+ifeq ($(BUILD_NOGIL),true)
+	$(MAKE) -C build-nogil \
+		DESTDIR=$(CURDIR)/debian/python$(PYTHON_VER_MAJ_MIN)t \
+		LIBDEST=$(PYTHON_PREFIX)/lib/python$(PYTHON_VER_MAJ_MIN) \
+		INCLUDEPY=$(PYTHON_PREFIX)/include/python$(PYTHON_VER_MAJ_MIN) \
+		install
+
+	SRC=$(CURDIR)/debian/python$(PYTHON_VER_MAJ_MIN)$(PYTHON_PREFIX) \
+		DST=$(CURDIR)/debian/python$(PYTHON_VER_MAJ_MIN)t$(PYTHON_PREFIX) \
+		/build/scripts/remove-duplicates.sh
+
+	find $(CURDIR)/debian/python$(PYTHON_VER_MAJ_MIN)t$(PYTHON_PREFIX) \
+		-type d -empty -delete
+
+	( \
+		cd $(CURDIR)/debian/python$(PYTHON_VER_MAJ_MIN)t$(PYTHON_PREFIX)/bin/ \
+			&& ln -s python$(PYTHON_VER_MAJ_MIN)t python3t \
+	)
+endif
+
+ifeq ($(FAST_BUILD),true)
+override_dh_auto_test:
+	@echo "Skipping tests (FAST_BUILD=$(FAST_BUILD))"
+endif

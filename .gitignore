@@ -1,0 +1,8 @@
+.*
+/*.code-workspace
+!/.cspell/
+!/python-builder.code-workspace
+!.gitattributes
+!.gitignore
+!.markdownlint.json
+/debs/
