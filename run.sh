@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Mark A. Ziesemer, www.ziesemer.com - 2025-12-27
+# Mark A. Ziesemer, www.ziesemer.com - 2025-12-27, 2026-02-07
 
 set -euo pipefail
 
@@ -13,7 +13,7 @@ docker build \
 	# --build-arg OS_DISTRO_BASE="debian:trixie-slim" \
 	# --build-arg OS_DISTRO_DISP="Debian Trixie" \
 	# --build-arg ARG PYTHON_VER_MAJ_MIN=3.14 \
-	# --build-arg PYTHON_VER_MIC=2 \
+	# --build-arg PYTHON_VER_MIC=3 \
 	# --build-arg FAST_BUILD=true \
 	# --build-arg BUILD_NOGIL=false \
 
