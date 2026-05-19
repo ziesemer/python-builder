@@ -1,10 +1,10 @@
-# Mark A. Ziesemer, www.ziesemer.com - 2025-12-25, 2026-02-07
+# Mark A. Ziesemer, www.ziesemer.com - 2025-12-25, 2026-05-18
 
 ARG \
 	OS_DISTRO_BASE="debian:trixie-slim" \
 	OS_DISTRO_DISP="Debian Trixie" \
 	PYTHON_VER_MAJ_MIN=3.14 \
-	PYTHON_VER_MIC=3 \
+	PYTHON_VER_MIC=5 \
 	FAST_BUILD \
 	BUILD_NOGIL=true
 
